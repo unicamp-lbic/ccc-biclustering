@@ -23,10 +23,10 @@ class Edge:
         return self.last_char_idx - self.first_char_idx + 1
 
     def __repr__(self):
-        return 'Edge(' + str(self.src_node_idx) + ', ' +\
-        str(self.dst_node_idx) + ', ' + \
-        str(self.first_char_idx) + ', ' + \
-        str(self.last_char_idx) + ')'
+        return 'Edge(from ' + str(self.src_node_idx) +\
+        ' to ' + str(self.dst_node_idx) +\
+        ', chars ' + str(self.first_char_idx) +\
+        ' to ' + str(self.last_char_idx) + ')'
 
 
 def split_edge(edge, suffix, suffix_tree):
@@ -87,7 +87,7 @@ class SuffixTree:
         self.alphabet = alphabet
         self.nodes = [Node()]
         self.edge_lookup = {} #edge_source_node_first_char_dict
-        self.active_point = Suffix(0, 0, -1)
+        self.active_point = Suffix(0, 0, -1) #node, first idx, last idx
         for i in range(len(string)):
             add_prefix(i, self.active_point, self)
 
@@ -111,7 +111,7 @@ class GeneralizedSuffixTree(SuffixTree):
         self.edge_lookup = {} #edge_source_node_first_char_dict
 
         for string_id, string in enumerate(Strings):
-            self.active_point = Suffix(0, 0, -1)
+            self.active_point = Suffix(0, 0, -1)#node, first idx, last idx
             self.string = string
             self.string_id = string_id
             for i in range(len(string)):
@@ -121,24 +121,29 @@ def add_prefix(last_char_idx, active_point, suffix_tree):
     last_parent_node_idx = -1
     while True:
         parent_node_idx = active_point.src_node_idx
-        if active_point.is_explicit():
-            if (active_point.src_node_idx, suffix_tree.string[last_char_idx]) in suffix_tree.edge_lookup: #already in tree
+        if active_point.is_explicit(): # 1st idx > last idx
+            if (active_point.src_node_idx, suffix_tree.string[last_char_idx]) in suffix_tree.edge_lookup:
+                #already in tree
                 break
         else:
-            edge = suffix_tree.edge_lookup[active_point.src_node_idx, suffix_tree.string[active_point.first_char_idx]]
-            if suffix_tree.string[edge.first_char_idx + len(active_point)] == suffix_tree.string[last_char_idx]: #the given prefix is already in the tree, do nothing
+            edge = suffix_tree.edge_lookup[active_point.src_node_idx, suffix_tree.string[active_point.first_char_idx]]##STRING
+            if suffix_tree.string[edge.first_char_idx + len(active_point)] == suffix_tree.string[last_char_idx]:##STRING
+                #the given prefix is already in the tree, do nothing
                 break
             else:
                 parent_node_idx = edge.split(active_point, suffix_tree)
+        # if it has not broken the loop, it has done an edge split
         suffix_tree.nodes.append(Node(-1))
-        new_edge = Edge(parent_node_idx, len(suffix_tree.nodes) - 1, last_char_idx, POSITIVE_INFINITY)##################
+        new_edge = Edge(parent_node_idx, len(suffix_tree.nodes) - 1, last_char_idx, POSITIVE_INFINITY)#src,dest,1st char,last char
         suffix_tree.insert_edge(new_edge)
-        #add suffix link
+        #add suffix link if it is not the first edge split in this call
         if last_parent_node_idx > 0:
             suffix_tree.nodes[last_parent_node_idx].suffix_link = parent_node_idx
         last_parent_node_idx = parent_node_idx
+        # ir curr src node is root, advance first char in the active point
         if active_point.src_node_idx == 0:
             active_point.first_char_idx += 1
+        # if curr src node is somethig else, follow its suffix link to update active point
         else:
             active_point.src_node_idx = suffix_tree.nodes[active_point.src_node_idx].suffix_link
         active_point.canonize(suffix_tree)
@@ -215,8 +220,8 @@ def show_edge(suffix_tree, src_node_idx, first_char):
     print edge
     print suffix_tree.string[edge.first_char_idx:edge.last_char_idx+1]
 
-def show_node(node_idx):
-    for c in ALPHABET:
+def show_node(suffix_tree, node_idx):
+    for c in suffix_tree.alphabet:
         try:
             edge = suffix_tree.edge_lookup[node_idx, c]
             print edge
@@ -225,13 +230,50 @@ def show_node(node_idx):
             pass
     print str(node_idx) + ' -> ' + str(suffix_tree.nodes[node_idx])
 
+def pprint_tree(suffix_tree, start_node=0, depth=0, string = '', top_call=True):
+
+    string += 'N%d' % (start_node)
+    if suffix_tree.nodes[start_node].suffix_link > 0:
+        string += '(->' + str(suffix_tree.nodes[start_node].suffix_link) + ')'
+
+    init = string.rfind('\n')+1
+    depth_increment = len(string)-init
+
+    first_edge = True
+    for c in suffix_tree.alphabet:
+        try:
+            edge = suffix_tree.edge_lookup[start_node, c]
+            string += "--"
+            string += suffix_tree.string[edge.first_char_idx:edge.last_char_idx+1]
+            string += '--'
+            string = pprint_tree (suffix_tree, edge.dst_node_idx, depth, string, False)
+            if first_edge:
+                depth += depth_increment
+                first_edge = False
+            string += '\n'
+            string += ' '*depth
+
+
+        except KeyError:
+            pass
+
+    return string
+
+
 if __name__=='__main__':
     test_str = 'abaababaabaab$'#'mississippi$'
     POSITIVE_INFINITY = len(test_str) - 1
     suffix_tree = SuffixTree(test_str)
     is_valid = is_valid_suffix_tree(suffix_tree)
     print 'is_valid_suffix_tree:', is_valid
+    print pprint_tree(suffix_tree)
+'''
+    for i in range(0,len(suffix_tree.nodes)):
+        print "Node %d" % (i)
+        show_node(suffix_tree, i)
+'''
 
+'''
     Strings = ['nudun$','nadunudun$']
     length=0
     for s in Strings:
@@ -241,3 +283,4 @@ if __name__=='__main__':
     suffix_tree = GeneralizedSuffixTree(Strings)
     is_valid = is_valid_suffix_tree(suffix_tree)
     print 'is_valid_suffix_tree:', is_valid
+'''
