@@ -88,41 +88,62 @@ class SuffixTree:
         if alphabet == None:
             alphabet = set(string)
         self.alphabet = alphabet
+
         self.nodes = [Node()]
         self.depths = [0]
         self.nleaves = [0]
+
         self.edge_lookup = {} #edge_source_node_first_char_dict
+        self.edge_by_dst = {}
+
         self.active_point = Suffix(0, 0, -1) #node, first idx, last idx
         for j in range(len(string)):
             add_prefix(j, self.active_point, self)
 
     def insert_edge(self, edge):
         self.edge_lookup[edge.src_node_idx, self.string[edge.first_char_idx]] = edge
+        self.edge_by_dst[edge.dst_node_idx] = edge
 
     def remove_edge(self, edge):
         del self.edge_lookup[edge.src_node_idx, self.string[edge.first_char_idx]]
+    def __repr__(self):
+        return pprint_tree(self)
         
 class GeneralizedSuffixTree(SuffixTree):
-    def __init__(self, Strings):
-        self.Strings = Strings
-        
+    def __init__(self, strings):
+        # create cat string
+        # extract alphabet and term char/symbol
+        self.strings = strings
+        terminators = set()
         alphabet = set()
-        string = ''
+        string = Strings[0][0:0] #generic way of geting a empty object of the same type of Strings items
         for s in Strings:
             string += s
-            for l in set(s):
+            terminators.add(s[-1])
+            for l in set(s[0:-1]):
                 alphabet.add(l)
         self.alphabet = alphabet
-        self.string = string
+        self.terminators = terminators
 
-        self.nodes = [Node()]
-        self.depths = [0]
-        self.nleaves = [0]
-        self.edge_lookup = {} #edge_source_node_first_char_dict
 
-        self.active_point = Suffix(0, 0, -1) #node, first idx, last idx
-        for j in range(len(string)):
-            add_prefix(j, self.active_point, self)
+        SuffixTree.__init__(self,string)
+
+        # fix depth and leaf edges labels
+        leaf_nodes_idx = [idx for idx, x in enumerate(self.nleaves) if x ==0]
+        for node in leaf_nodes_idx:
+            edge = self.edge_by_dst[node]
+            s = self.string[edge.first_char_idx:edge.last_char_idx+1]
+            for idx, char in enumerate(s):
+                if char in self.terminators:
+                    idx += edge.first_char_idx # idx relative to the full string
+                    self.depths[node] -= (edge.last_char_idx-idx)
+                    self.edge_by_dst[node].last_char_idx = idx
+                    self.edge_lookup[(edge.src_node_idx,self.string[edge.first_char_idx])].last_char_idx = idx
+
+                    break
+
+
+
 
 def add_prefix(last_char_idx, active_point, suffix_tree):
     last_parent_node_idx = -1
@@ -133,8 +154,8 @@ def add_prefix(last_char_idx, active_point, suffix_tree):
                 #already in tree
                 break
         else:
-            edge = suffix_tree.edge_lookup[active_point.src_node_idx, suffix_tree.string[active_point.first_char_idx]]##STRING
-            if suffix_tree.string[edge.first_char_idx + len(active_point)] == suffix_tree.string[last_char_idx]:##STRING
+            edge = suffix_tree.edge_lookup[active_point.src_node_idx, suffix_tree.string[active_point.first_char_idx]]
+            if suffix_tree.string[edge.first_char_idx + len(active_point)] == suffix_tree.string[last_char_idx]:
                 #the given prefix is already in the tree, do nothing
                 break
             else:
@@ -271,7 +292,7 @@ def pprint_tree(suffix_tree, start_node=0, depth=0, string = ''):
 if __name__=='__main__':
     test_str = 'abaababaabaab$'#'mississippi$'
     test_str = 'abcabx$'
-    test_str = 'xabxa$babxba#'
+    test_str = 'xabxa$'
     POSITIVE_INFINITY = len(test_str) - 1
     suffix_tree = SuffixTree(test_str)
     #is_valid = is_valid_suffix_tree(suffix_tree)
@@ -287,4 +308,4 @@ if __name__=='__main__':
     suffix_tree = GeneralizedSuffixTree(Strings)
     #is_valid = is_valid_suffix_tree(suffix_tree)
     #print 'is_valid_suffix_tree:', is_valid
-    #print pprint_tree(suffix_tree)
+    print pprint_tree(suffix_tree)
