@@ -27,7 +27,7 @@ class CCCBiclustering(st.GeneralizedSuffixTree):
         for node in self.bicluster_nodes:
             pattern = str(self.path_to_node(node))
             lines = str([l for l in self.strings_from_node(node)])
-            print 'N' + str(node) + ': ' + pattern + ': ' + lines
+            print 'Pattern: ' + pattern + ' Lines: ' + lines
 
 
 
@@ -49,5 +49,4 @@ if __name__ == '__main__':
     string_set = ['NUDUN', 'DUDUD', 'NNNUN', 'UUDUU']
     biclusters = CCCBiclustering(string_set)
     biclusters.pprint()
-    biclusters.pprint_tree()
-    print biclusters.strings_from_node(20)
+

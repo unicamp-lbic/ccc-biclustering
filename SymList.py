@@ -28,6 +28,7 @@ class SymList():
         for elem in self.list:
             str += elem
         return str
+
     def __add__(self,s):
         return self.list + s.list
 
