@@ -102,7 +102,7 @@ class SuffixTree:
             add_prefix(j, self.active_point, self)
 
         self.nleaves = [0 for i in range(len(self.nodes))]
-        self.__leaf_count__()
+
 
     def insert_edge(self, edge):
         self.edge_lookup[edge.src_node_idx, self.string[edge.first_char_idx]] = edge
@@ -135,13 +135,13 @@ class SuffixTree:
     def pprint_tree(self):
         print pprint_tree(self)
 
-    def __leaf_count__(self, start_node=0):
+    def leaf_count(self, start_node=0):
         count = 0
         for c in self.alphabet:
             try:
                 edge = self.edge_lookup[start_node, c]
                 if not self.is_leaf(edge.dst_node_idx):
-                    count += self.__leaf_count__(edge.dst_node_idx)
+                    count += self.leaf_count(edge.dst_node_idx)
                 else:
                     count += 1
             except KeyError:
