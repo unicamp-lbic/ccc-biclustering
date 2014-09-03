@@ -18,7 +18,7 @@ class CCCBiclustering(st.GeneralizedSuffixTree):
             u = self.nodes[v].suffix_link
             # if v has a suffix link to u
             if u != None and u != -1:
-                if self.nchildren[u] == self.nchildren[v]:
+                if self.nleaves[u] == self.nleaves[v]:
                     valid_nodes[u] = False
         valid_nodes[0] = False
         self.bicluster_nodes = [idx for idx, valid in enumerate(valid_nodes) if valid == True]
