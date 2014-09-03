@@ -1,10 +1,12 @@
 __author__ = 'thalita'
 
 class SymList():
-    def __init__(self, string,  charPerSymbol = None):
+    def __init__(self, string='',  charPerSymbol = None):
         self.list = []
+        if string == '':
+            pass
         # If no charPerSymbol was informed, put whole string as one element
-        if charPerSymbol == None:
+        elif charPerSymbol == None:
             self.list.append(string)
         else:
             if len(string) % charPerSymbol:
