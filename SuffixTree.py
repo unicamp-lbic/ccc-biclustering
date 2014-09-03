@@ -180,12 +180,13 @@ class GeneralizedSuffixTree(SuffixTree):
                     self.edge_lookup[(edge.src_node_idx,self.string[edge.first_char_idx])].last_char_idx = idx
                     break
 
-    def strings_from_node(self, node, ids=set()):
+    def strings_from_node(self, node):
+        ids = set()
         for c in self.alphabet:
             try:
                 edge = self.edge_lookup[node, c]
                 if not self.is_leaf(edge.dst_node_idx):
-                    ids.update(self.strings_from_node(edge.dst_node_idx, ids))
+                    ids.update(self.strings_from_node(edge.dst_node_idx))
                 else:
                     corrected_idx = edge.last_char_idx
                     for s_id, s in enumerate(self.strings):
