@@ -68,8 +68,8 @@ if __name__ == '__main__':
         for s in line.split()[1:]:
             lines[idx] += str(s)
     lines = lines[1:]
-    print lines[0:2]
+
     b = CCCBiclustering(lines)
     f = open('result.txt','w')
-    f = str(b)
+    f.write(str(b))
     f.close()
