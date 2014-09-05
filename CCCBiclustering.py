@@ -1,6 +1,7 @@
 __author__ = 'thalita'
 import SuffixTree as st
 from SymList import SymList
+import numpy as np
 
 class CCCBiclustering(st.GeneralizedSuffixTree):
     def __init__(self, lines):
@@ -52,6 +53,35 @@ def __prepare_lines__(lines):
         new_string.append(term)
         string_set[str_idx] = new_string
     return string_set
+
+def discretization(npmatrix):
+    # normalize each line
+    for i in xrange(mat.shape[0]):
+        mat[i,:] = (mat[i,:] - mat.mean(0))/mat.std(0)
+
+    mat2 = np.zeros(mat.shape)
+    for i in xrange(mat.shape[0]):
+        for j in xrange(mat.shape[1]-1):
+            if abs(mat[i,j]) != 0:
+                mat2[i,j] = (mat[i,j+1]-mat[i,j])/abs(mat[i,j])
+            elif mat[i,j+1] < 0:
+                mat2[i,j] = -1
+            elif mat[i,j+1] > 0:
+                mat2[i,j] = 1
+            #else:
+            #    mat2[i,j] = 0
+    lines = []
+    for i in xrange(mat.shape[0]):
+        s = ''
+        for j in xrange(mat.shape[1]):
+            if mat2[i,j]<=1:
+                s+='D'
+            elif mat2[i,j]>=1:
+                s+='U'
+            else:
+                s+='N'
+        lines.append(s)
+    return lines
 
 if __name__ == '__main__':
     print 'Test 1'
