@@ -3,3 +3,5 @@
 .spyderworkspace
 sandbox.py
 *.pyc
+*.out
+__init__.py
