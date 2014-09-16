@@ -107,6 +107,15 @@ if __name__ == '__main__':
     print biclusters
 
     print 'Test 2'
+    import numpy as np
+    mat = np.random.random((5,6))
+    print mat
+    mat = discretization(mat)
+    print mat
+    biclusters = CCCBiclustering(mat)
+    print biclusters
+'''
+    print 'Test 3'
     test_file = './test_data/1500_Rows_50_Rows_50_Columns.txt'
     f = open(test_file,'r')
     lines=[]
@@ -120,3 +129,4 @@ if __name__ == '__main__':
     f = open('result.txt','w')
     f.write(str(b))
     f.close()
+'''
