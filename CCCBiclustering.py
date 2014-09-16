@@ -34,12 +34,27 @@ class CCCBiclustering(st.GeneralizedSuffixTree):
     def __repr__(self):
         string = ''
         for node in self.bicluster_nodes:
-            pattern = str(self.path_to_node(node))
-            lines = str([l for l in self.strings_from_node(node)])
-            string += 'Pattern: ' + pattern + ' Lines: ' + lines + '\n'
+            pattern = self.path_to_node(node)
+            columns = [int(pattern[0][1:]), int(pattern[-1][1:])]
+            if columns[0]==columns[1]:
+                columns = [columns[0]]
+            pattern = [c[0] for c in pattern]
+            lines = [l for l in self.strings_from_node(node)]
+            string += __list2str__(pattern,'') + ', ' + \
+                      __list2str__(columns,' ') + ',' \
+                      + __list2str__(lines,' ') + '\n'
         return string
 
+    def num_biclusters(self):
+        return len(self.bicluster_nodes)
 
+
+def __list2str__(alist,sep=' '):
+    string=''
+    for i in alist:
+        string += str(i)
+        string += sep
+    return string
 
 def __prepare_lines__(lines):
     # create string set from lines
@@ -54,12 +69,13 @@ def __prepare_lines__(lines):
         string_set[str_idx] = new_string
     return string_set
 
-def discretization(npmatrix):
+def discretization(mat, t=1):
+    # mat is a numpy 2D array
     # normalize each line
     for i in xrange(mat.shape[0]):
         mat[i,:] = (mat[i,:] - mat.mean(0))/mat.std(0)
 
-    mat2 = np.zeros(mat.shape)
+    mat2 = np.zeros((mat.shape[0], mat.shape[1]-1))
     for i in xrange(mat.shape[0]):
         for j in xrange(mat.shape[1]-1):
             if abs(mat[i,j]) != 0:
@@ -71,12 +87,13 @@ def discretization(npmatrix):
             #else:
             #    mat2[i,j] = 0
     lines = []
-    for i in xrange(mat.shape[0]):
+
+    for i in xrange(mat2.shape[0]):
         s = ''
-        for j in xrange(mat.shape[1]):
-            if mat2[i,j]<=1:
+        for j in xrange(mat2.shape[1]):
+            if mat2[i,j]<=-t:
                 s+='D'
-            elif mat2[i,j]>=1:
+            elif mat2[i,j]>=t:
                 s+='U'
             else:
                 s+='N'
