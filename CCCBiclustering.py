@@ -126,7 +126,7 @@ if __name__ == '__main__':
     lines = lines[1:]
 
     b = CCCBiclustering(lines)
-    f = open('result.txt','w')
+    f = open('result.out','w')
     f.write(str(b))
     f.close()
 '''
