@@ -1,4 +1,3 @@
-import string
 
 POSITIVE_INFINITY = 1 << 30
 
@@ -148,6 +147,46 @@ class SuffixTree:
                 pass
         self.nleaves[start_node] = count
         return count
+
+    def _is_substr(self, s1, s2):
+        result = False
+        for i in range(0, len(s2)-len(s1)+1):
+            if s1 == s2[i:i+len(s1)]:
+                result = True
+                break
+        return result
+
+    def count_occurrences(self, aString, start_node=0):
+         #node, first idx, last idx
+        node = 0
+        j = 0
+        while j < len(aString):
+            try:
+                edge = self.edge_lookup[node, aString[j]]
+                i = 0
+                mismatch = False
+                while i < len(edge) and j+i < len(aString):
+                    if aString[j+i] != self.string[edge.first_char_idx+i]:
+                        mismatch = True
+                        break
+                    i += 1
+                if not mismatch:
+                    node = edge.dst_node_idx
+                    if j+i == len(aString):
+                        # out becaus a String has been fully matched
+                        if self.is_leaf(node):
+                            return 1
+                        else:
+                            return self.nleaves[edge.dst_node_idx]
+                    else:
+                        #out because edge ended, need to continue matching
+                        j += len(edge)
+
+            except KeyError:
+                return 0
+
+        return 0
+
 
 class GeneralizedSuffixTree(SuffixTree):
     def __init__(self, strings):
@@ -344,9 +383,7 @@ def show_node(suffix_tree, node_idx):
     print str(node_idx) + ' -> ' + str(suffix_tree.nodes[node_idx])
 
 
-
-
-if __name__=='__main__':
+if __name__ == '__main__':
     test_str = 'abaababaabaab$'#'mississippi$'
     test_str = 'abcabx$'
     test_str = 'xabxa$'
@@ -354,8 +391,11 @@ if __name__=='__main__':
     suffix_tree = SuffixTree(test_str)
     #is_valid = is_valid_suffix_tree(suffix_tree)
     #print 'is_valid_suffix_tree:', is_valid
+    suffix_tree.leaf_count()
     print pprint_tree(suffix_tree)
-
+    print suffix_tree.count_occurrences('bx')
+    print suffix_tree.count_occurrences('xa')
+    print suffix_tree.count_occurrences('ab')
 
     Strings = ['xabxa$','babxba#']
     length=0
@@ -363,6 +403,7 @@ if __name__=='__main__':
         length += len(s)
     POSITIVE_INFINITY = length - 1
     suffix_tree = GeneralizedSuffixTree(Strings)
+    suffix_tree.leaf_count()
     #is_valid = is_valid_suffix_tree(suffix_tree)
     #print 'is_valid_suffix_tree:', is_valid
     print pprint_tree(suffix_tree)
@@ -370,3 +411,6 @@ if __name__=='__main__':
     print suffix_tree.path_to_node(15)
 
     print suffix_tree.strings_from_node(17)
+    print suffix_tree.count_occurrences('a')
+    print suffix_tree.count_occurrences('abx')
+    print suffix_tree.count_occurrences('abxa')
