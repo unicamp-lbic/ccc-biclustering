@@ -48,28 +48,21 @@ class CCCBiclustering(st.GeneralizedSuffixTree):
         for node in nodes:
             pattern = self.path_to_node(node)
             total_lines = len(self.strings)
-            print pattern
             if self.ncols[node] == 1:
                 count = self.count_occurrences(pattern[0:1])
-                print count, total_lines
                 self.p_values[node] = count/float(total_lines)
             else:
                 single_count = [total_lines]
                 for i in range(len(pattern[0:-1])):
                     count = self.count_occurrences(pattern[i:i+1])
-                    print pattern[i:i+1], count
                     single_count.append(count)
 
                 pair_count = [single_count[1]]
                 for i in range(0, len(pattern)-2+1):
                     count = self.count_occurrences(pattern[i:i+2])
-                    print pattern[i:i+2], count
                     pair_count.append(count)
-                print pair_count, single_count
                 probs = [x/float(y) for x, y in zip(pair_count, single_count)]
-                print probs
                 self.p_values[node] = reduce(lambda x,y : x*y, probs)
-                print self.p_values[node]
 
 
 
