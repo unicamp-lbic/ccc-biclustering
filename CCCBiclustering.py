@@ -17,6 +17,15 @@ class CCCBiclustering(st.GeneralizedSuffixTree):
         print 'counting leaves'
         self.leaf_count()
 
+        self.bicluster_nodes = self._get_bicluster_nodes()
+        self.p_values = {}
+        self.filtered_nodes = {}
+        self.ncols = self.num_cols()
+        self.nlines = self.num_lines()
+
+        print 'Done!'
+
+    def _get_bicluster_nodes(self):
         valid_nodes = [True for i in range(len(self.nodes))]
         # no leaf node can be a bicluster
         for v in self.leaf_nodes_idx():
@@ -28,13 +37,7 @@ class CCCBiclustering(st.GeneralizedSuffixTree):
                 if self.nleaves[u] == self.nleaves[v]:
                     valid_nodes[u] = False
         valid_nodes[0] = False
-        self.bicluster_nodes = [idx for idx, valid in enumerate(valid_nodes) if valid == True]
-        self.p_values = {}
-        self.filtered_nodes = {}
-        self.ncols = self.num_cols()
-        self.nlines = self.num_lines()
-
-        print 'Done!'
+        return [idx for idx, valid in enumerate(valid_nodes) if valid == True]
 
     def __str__(self):
         return self.__repr__()
@@ -118,6 +121,64 @@ class CCCBiclustering(st.GeneralizedSuffixTree):
                self.filtered_nodes[node] = True
         return self.filtered_nodes
 
+
+class StrMatch(CCCBiclustering):
+    def __init__(self, lines):
+        string_set = []
+        for str_idx, string in enumerate(lines):
+            new_string = SymList()
+            for idx,c in enumerate(string):
+                new_string.append(SymList(c))
+            term = SymList('$'+str(str_idx))
+            new_string.append(term)
+            string_set.append(new_string)
+        # set st package constant
+        st.POSITIVE_INFINITY = len(str(string_set)) - 1
+        print 'building tree'
+        # build tree (tree is self)
+        st.GeneralizedSuffixTree.__init__(self, string_set)
+        print 'counting leaves'
+        self.leaf_count()
+
+        self.bicluster_nodes = self._get_bicluster_nodes()
+        self.p_values = {}
+        self.filtered_nodes = {}
+        self.ncols = self.num_cols()
+        self.nlines = self.num_lines()
+
+    def compute_p_values(self):
+        raise NotImplemented
+
+    def num_cols(self, ids=None):
+        ncols = {}
+        if ids == None:
+            ids = self.bicluster_nodes
+        for node in ids:
+            pattern = self.path_to_node(node)
+            ncols[node] = len(pattern)
+        return ncols
+
+    def bicluster_columns(self, node):
+        ptr = self.strptr_to_node(node)
+        columns = list()
+        for line, beg, end in ptr:
+            columns.append((line, beg-self.depths[node]+1, end))
+        columns.sort()
+        return columns
+
+    def bicluster_info(self, nodes):
+        string = ''
+        for node in nodes:
+            pattern = self.path_to_node(node)
+            pattern = [c[0] for c in pattern]
+            string += __list2str__(pattern, sep='') + ','
+            lines = [l for l in self.strings_from_node(node)]
+            string += __list2str__(lines, sep=' ')
+            columns = self.bicluster_columns(node)
+            for line, beg, end in columns:
+                string += ', %d:%d-%d' % (line, beg, end)
+            string += '\n'
+        return string
 
 def __list2str__(alist, sep=' '):
     string=''

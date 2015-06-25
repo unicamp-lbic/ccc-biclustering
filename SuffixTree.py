@@ -219,6 +219,36 @@ class GeneralizedSuffixTree(SuffixTree):
                     self.edge_lookup[(edge.src_node_idx,self.string[edge.first_char_idx])].last_char_idx = idx
                     break
 
+    def strptr_to_node(self, node):
+        ptrs = set()
+        child_ptrs = set()
+        for c in self.alphabet:
+            try:
+                edge = self.edge_lookup[node, c]
+                if not self.is_leaf(edge.dst_node_idx):
+                    child_ptrs.update(self.strptr_to_node(edge.dst_node_idx))
+                else:
+                    corrected_idx = edge.last_char_idx
+                    for s_id, s in enumerate(self.strings):
+                        if corrected_idx-len(s)>=0:
+                            corrected_idx -= len(s)
+                        else:
+                            break
+                    # First get ptr for this edge
+                    ptr = (s_id,
+                           len(self.strings[s_id]) - len(edge),
+                           len(self.strings[s_id]) - 1)
+                    child_ptrs.add(ptr)
+            except KeyError:
+                pass
+        for ptr in child_ptrs:
+            parent_edge = self.edge_by_dst[node]
+            first = ptr[1] - len(parent_edge)
+            last = ptr[1] - 1
+            s_id = ptr[0]
+            ptrs.add((s_id, first, last))
+        return ptrs
+
     def strings_from_node(self, node):
         ids = set()
         for c in self.alphabet:
@@ -382,7 +412,7 @@ def show_node(suffix_tree, node_idx):
             pass
     print str(node_idx) + ' -> ' + str(suffix_tree.nodes[node_idx])
 
-
+#%%
 if __name__ == '__main__':
     test_str = 'abaababaabaab$'#'mississippi$'
     test_str = 'abcabx$'
@@ -407,7 +437,7 @@ if __name__ == '__main__':
     #is_valid = is_valid_suffix_tree(suffix_tree)
     #print 'is_valid_suffix_tree:', is_valid
     print pprint_tree(suffix_tree)
-
+    print suffix_tree.strptr_from_node(11)
     print suffix_tree.path_to_node(15)
 
     print suffix_tree.strings_from_node(17)
