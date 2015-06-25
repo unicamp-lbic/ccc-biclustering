@@ -146,6 +146,31 @@ class StrMatch(CCCBiclustering):
         self.ncols = self.num_cols()
         self.nlines = self.num_lines()
 
+    def _get_bicluster_nodes(self):
+        valid_nodes = [False for i in range(len(self.nodes))]
+        n_strings = {}
+        for v in self.internal_nodes_idx():
+            n_strings[v] = len(self.strings_from_node(v))
+        for v in self.internal_nodes_idx():
+            if n_strings[v] >= 2:
+                internal_children  = \
+                    [n for n in self.children_nodes(v)
+                     if not self.is_leaf(n)]
+                # if v has incomming suffix link or internal children nodes
+                if v in self.in_suffix_link or internal_children != []:
+                    valid_nodes[v] = True
+                    for u in set(self.in_suffix_link[v] + internal_children):
+                        if n_strings[v] < n_strings[u]:
+                            valid_nodes[v] = False
+                        elif n_strings[v] == n_strings[u]:
+                            if self.nleaves[v] > self.nleaves[u]:
+                                valid_nodes[v] = True
+                            else:
+                                valid_nodes[v] = False
+                else:
+                    valid_nodes[v] = True
+        return [idx for idx, valid in enumerate(valid_nodes) if valid == True]
+
     def compute_p_values(self):
         raise NotImplemented
 
@@ -169,6 +194,7 @@ class StrMatch(CCCBiclustering):
     def bicluster_info(self, nodes):
         string = ''
         for node in nodes:
+            string += '%d, '  % node
             pattern = self.path_to_node(node)
             pattern = [c[0] for c in pattern]
             string += __list2str__(pattern, sep='') + ','
@@ -245,6 +271,10 @@ if __name__ == '__main__':
     biclusters = CCCBiclustering(string_set)
     print biclusters
     biclusters.compute_p_values()
+    string_set = ['NUDUN', 'DUDUD', 'NNNUN', 'UUDUU','UDUDU']
+    lagged = StrMatch(string_set)
+    print lagged
+    lagged.pprint_tree()
     '''
     print 'Test 2'
     import numpy as np

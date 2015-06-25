@@ -1,3 +1,4 @@
+from collections import defaultdict
 
 POSITIVE_INFINITY = 1 << 30
 
@@ -92,6 +93,7 @@ class SuffixTree:
         self.nodes = [Node()]
         self.depths = [0]
         self.nchildren = [0]
+        self.in_suffix_link = defaultdict(list)
 
         self.edge_lookup = {} #edge_source_node_first_char_dict
         self.edge_by_dst = {}
@@ -112,7 +114,7 @@ class SuffixTree:
         del self.edge_by_dst[edge.dst_node_idx]
 
     def internal_nodes_idx(self):
-        return [idx for idx, x in enumerate(self.nchildren) if x !=0]
+        return [idx for idx, x in enumerate(self.nchildren) if x !=0 if idx != 0]
 
     def leaf_nodes_idx(self):
         return [idx for idx, x in enumerate(self.nchildren) if x ==0]
@@ -127,6 +129,15 @@ class SuffixTree:
 
     def is_leaf(self, node):
         return bool(self.nchildren[node]==0)
+
+    def children_nodes(self, node):
+        children = []
+        for c in self.alphabet:
+            try:
+                children.append(self.edge_lookup[node, c].dst_node_idx)
+            except KeyError:
+                pass
+        return children
 
     def __repr__(self):
         return pprint_tree(self)
@@ -321,6 +332,7 @@ def add_prefix(last_char_idx, active_point, suffix_tree):
         #add suffix link if it is not the first edge split in this call
         if last_parent_node_idx > 0:
             suffix_tree.nodes[last_parent_node_idx].suffix_link = parent_node_idx
+            suffix_tree.in_suffix_link[parent_node_idx].append(last_parent_node_idx)
         last_parent_node_idx = parent_node_idx
         # ir curr src node is root, advance first char in the active point
         if active_point.src_node_idx == 0:
@@ -331,6 +343,7 @@ def add_prefix(last_char_idx, active_point, suffix_tree):
         active_point.canonize(suffix_tree)
     if last_parent_node_idx > 0:
         suffix_tree.nodes[last_parent_node_idx].suffix_link = parent_node_idx
+        suffix_tree.in_suffix_link[parent_node_idx].append(last_parent_node_idx)
     #last_parent_node_idx = parent_node_idx
     active_point.last_char_idx += 1
     active_point.canonize(suffix_tree)
@@ -412,7 +425,6 @@ def show_node(suffix_tree, node_idx):
             pass
     print str(node_idx) + ' -> ' + str(suffix_tree.nodes[node_idx])
 
-#%%
 if __name__ == '__main__':
     test_str = 'abaababaabaab$'#'mississippi$'
     test_str = 'abcabx$'
