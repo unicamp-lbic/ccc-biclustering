@@ -163,10 +163,11 @@ class StrMatch(CCCBiclustering):
                         if n_strings[v] < n_strings[u]:
                             valid_nodes[v] = False
                         elif n_strings[v] == n_strings[u]:
-                            if self.nleaves[v] > self.nleaves[u]:
-                                valid_nodes[v] = True
-                            else:
+                            if self._is_substr(self.path_to_node(v),
+                                               self.path_to_node(u)):
                                 valid_nodes[v] = False
+
+
                 else:
                     valid_nodes[v] = True
         return [idx for idx, valid in enumerate(valid_nodes) if valid == True]
