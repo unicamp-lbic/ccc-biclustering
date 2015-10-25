@@ -147,7 +147,7 @@ class StrMatch(CCCBiclustering):
         self.nlines = self.num_lines()
 
     def _get_bicluster_nodes(self):
-        valid_nodes = [False for i in range(len(self.nodes))]
+        valid_nodes = dict([(idx, False) for idx in self.internal_nodes_idx()])
         n_strings = {}
         for v in self.internal_nodes_idx():
             n_strings[v] = len(self.strings_from_node(v))
@@ -170,7 +170,7 @@ class StrMatch(CCCBiclustering):
 
                 else:
                     valid_nodes[v] = True
-        return [idx for idx, valid in enumerate(valid_nodes) if valid == True]
+        return [idx for idx, valid in valid_nodes.items() if valid == True]
 
     def compute_p_values(self):
         raise NotImplemented
@@ -186,9 +186,10 @@ class StrMatch(CCCBiclustering):
 
     def bicluster_columns(self, node):
         ptr = self.strptr_to_node(node)
+        parent_node = self.edge_by_dst[node].src_node_idx
         columns = list()
         for line, beg, end in ptr:
-            columns.append((line, beg-self.depths[node]+1, end))
+            columns.append((line, beg-self.depths[parent_node]+1, end))
         columns.sort()
         return columns
 
